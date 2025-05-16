@@ -9,16 +9,13 @@
   jq,
   gcc-unwrapped,
 }:
-let
-  sentinelOnePackage = "SentinelAgent-Linux-24-3-3-1-x86-64-release-24-3-3_linux_x86_64_v24_3_3_1.deb";
-in
 stdenv.mkDerivation {
   pname = "sentinelone";
-  version = "24.3.3.1";
+  version = "25.1.2.17";
 
   src = fetchurl {
-    url = "https://imugit.imubit.com/morgan.helton/sentinelone/-/raw/main/${sentinelOnePackage}";
-    hash = "sha256-EgahRYXm3eceaDnR8wf6qQ6kirk1xC+epbHjj1KyLlc=";
+    url = "file:///home/felix/SentinelAgent_linux_x86_64_v25_1_2_17.deb";
+    hash = "sha256-M3o+d3/abk8M/9ghScJwtRVwCRSEYvPbcpB+bSIGIzk=";
   };
 
   unpackPhase = ''

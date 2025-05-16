@@ -109,18 +109,22 @@ in
           "uptrack-prefetch.service"
           "uptrack.service"
         ];
-        StartLimitInterval = "90";
-        StartLimitBurst = "4";
+        # RefuseManualStart = "yes";
       };
       serviceConfig = {
-        Type = "forking";
-        ExecStart = "${cfg.package}/bin/sentinelctl control run";
+        # StartLimitInterval = "90";
+        StartLimitBurst = "4";
+
+        MemoryAccounting = "yes";
+
+        Type = "exec";
+        ExecStart = "${cfg.package}/bin/sentinelone-agent";
+        # ExecStart = "${cfg.package}/bin/sentinelctl control run";
         WorkingDirectory = "/opt/sentinelone/bin";
         SyslogIdentifier = "${cfg.dataDir}/log";
-        WatchdogSec = "5s";
-        Restart = "always";
+        WatchdogSec = "30s";
+        Restart = "on-failure";
         RestartSec = "4";
-        RefuseManualStop = "yes";
         MemoryMax = "18446744073709543424";
         ExecStop = "${cfg.package}/bin/sentinelctl control shutdown";
         NotifyAccess = "all";
