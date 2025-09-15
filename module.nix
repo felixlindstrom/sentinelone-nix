@@ -7,6 +7,11 @@
 with lib;
 let
   cfg = config.services.sentinelone;
+  customerId =
+    cfg.customerId or (
+      if cfg.email != null && cfg.serialNumber != null then "${cfg.email}-${cfg.serialNumber}" else null
+    );
+  hasCustomerId = customerId != null;
   initScript = pkgs.writeShellScriptBin "sentinelone-init.sh" ''
     #!/bin/bash
 
@@ -20,7 +25,7 @@ let
     S1_AGENT_MANAGEMENT_TOKEN=$(cat ${cfg.sentinelOneManagementTokenPath})
     S1_AGENT_DEVICE_TYPE=desktop
     S1_AGENT_AUTO_START=true
-    S1_AGENT_CUSTOMER_ID=${cfg.email}-${cfg.serialNumber}
+    ${optionalString hasCustomerId "S1_AGENT_CUSTOMER_ID=${customerId}"}
     EOF
 
       cat << EOF > ${cfg.dataDir}/configuration/installation_params.json
@@ -50,12 +55,23 @@ in
       sentinelone = {
         enable = mkEnableOption "SentinelOne Service";
         package = mkPackageOption pkgs "sentinelone" { };
+
+        customerId = mkOption {
+          type = types.nullOr types.str;
+          default = null;
+          description = ''
+            Set a customer specific identifier for the host. It is common practice to set this as your email and serial number separated by a hyphen.
+          '';
+          example = "me@gmail.com-FTXYZWW";
+        };
         email = mkOption {
-          type = types.str;
+          type = types.nullOr types.str;
+          default = null;
           example = "me@gmail.com";
         };
         serialNumber = mkOption {
-          type = types.str;
+          type = types.nullOr types.str;
+          default = null;
           example = "FTXYZWW";
         };
         sentinelOneManagementTokenPath = mkOption {
@@ -71,6 +87,32 @@ in
   };
 
   config = mkIf cfg.enable {
+    warnings =
+      optional (cfg.email != null) "services.sentinelone.email is deprecated in favour of customerId."
+      ++ optional (
+        cfg.serialNumber != null
+      ) "services.sentinelone.serialNumber is deprecated in favour of customerId.";
+
+    assertions = [
+      {
+        assertion = (cfg.customerId != null) -> (cfg.email == null && cfg.serialNumber == null);
+        message = ''
+          You cannot use services.sentinelone.customerId with the deprecated services.sentinelone.email and services.sentinelone.serialNumber options.
+        '';
+      }
+      {
+        assertion = (cfg.email != null) -> (cfg.serialNumber != null);
+        message = ''
+          services.sentinelone.email requires services.sentinelone.serialNumber to also be set.
+        '';
+      }
+      {
+        assertion = (cfg.serialNumber != null) -> (cfg.email != null);
+        message = ''
+          services.sentinelone.serialNumber requires services.sentinelone.email to also be set.
+        '';
+      }
+    ];
 
     users.users.sentinelone = {
       isSystemUser = true;
