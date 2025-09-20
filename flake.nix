@@ -57,7 +57,7 @@
               default = self.checks.${system}.vmtest;
               vmtest = (
                 import ./test.nix {
-                  inherit pkgs;
+                  inherit lib pkgs;
                   inherit (self) nixosModules;
                 }
               );
